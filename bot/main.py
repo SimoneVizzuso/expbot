@@ -18,7 +18,7 @@ def start(update: Update, context: CallbackContext):
                                   "Chack your stats with /status and the chat ranks with /leaderboard")
 
 
-def status(update: Update):
+def status(update: Update, context: CallbackContext):
     user = update.effective_message.from_user
     chat = update.effective_message.chat
     player = get_player(user.id, chat.id)
