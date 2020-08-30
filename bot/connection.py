@@ -72,11 +72,11 @@ def get_player(user_id, chat_id):
         # conn = psycopg2.connect(**params)
         conn = psycopg2.connect(host="localhost", dbname="expbot", user="postgres", password="HoZGnEAPL3xP6H")
         cur = conn.cursor()
-        cur.execute("select * from player where user_id = " + str(user_id) + " and chat_id = " + str(chat_id))
+        cur.execute("""select * from player where user_id = %s and chat_id = %s""", (user_id, chat_id))
         row = cur.fetchone()
         cur.close()
         if row is not None:
-            return Player(row[0], row[1], row[2], row[3], row[4], row[5])
+            return Player(row[0], row[1], row[2], row[3], row[4])
         else:
             return None
     except (Exception, psycopg2.DatabaseError) as error:
@@ -129,6 +129,32 @@ def check_player_level_up(user_id, chat_id=0):
         conn.commit()
         cur.close()
         return level_up
+    except (Exception, psycopg2.DatabaseError) as error:
+        print(error)
+    finally:
+        if conn is not None:
+            conn.close()
+
+
+def get_top_ten(chat_id=0):
+    conn = None
+    try:
+        # params = config()
+        # conn = psycopg2.connect(**params)
+        conn = psycopg2.connect(host="localhost", dbname="expbot", user="postgres", password="HoZGnEAPL3xP6H")
+        cur = conn.cursor()
+        cur.execute("select * from player where chat_id = " + str(chat_id) + " order by experience desc limit 10")
+        row = cur.fetchone()
+        leaderboard = []
+        if row is not None:
+            while row is not None:
+                leaderboard.append(Player(row[0], row[1], row[2], row[3], row[4]))
+                print(row)
+                row = cur.fetchone()
+        else:
+            return None
+        cur.close()
+        return leaderboard
     except (Exception, psycopg2.DatabaseError) as error:
         print(error)
     finally:

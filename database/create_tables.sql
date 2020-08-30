@@ -18,8 +18,8 @@ insert into rank(level, starting_experience, experience_next_level, icon) VALUES
 insert into rank(level, starting_experience, experience_next_level, icon) VALUES (10, 100000, 0, null);
 
 create table player(
-    user_id int,
-    chat_id int,
+    user_id bigint,
+    chat_id bigint,
     level int,
     experience int,
     experience_next_level int,
