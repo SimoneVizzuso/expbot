@@ -143,7 +143,7 @@ def get_top_ten(chat_id=0):
         # conn = psycopg2.connect(**params)
         conn = psycopg2.connect(host="localhost", dbname="expbot", user="postgres", password="HoZGnEAPL3xP6H")
         cur = conn.cursor()
-        cur.execute("select * from player where chat_id = " + str(chat_id) + " order by experience desc limit 10")
+        cur.execute("""select * from player where chat_id = %s order by experience desc limit 10""", (chat_id))
         row = cur.fetchone()
         leaderboard = []
         if row is not None:
