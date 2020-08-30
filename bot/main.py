@@ -93,7 +93,7 @@ def antiflood(user_id, chat_id):
         return True
 
 
-updater = Updater(token='1369584364:AAHR0BfkhMetufx6slqD53kL5wCaqsvcncE', use_context=True)
+updater = Updater(token='', use_context=True)
 
 
 def main():
