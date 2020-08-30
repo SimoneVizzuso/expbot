@@ -1,6 +1,9 @@
+import logging
+
 from telegram import Update
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
-import logging
+
+from connection import insert_player, get_player, delete_player, gain_exp, check_player_level_up
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
@@ -12,25 +15,63 @@ def start(update: Update, context: CallbackContext):
 
 
 def register(update: Update, context: CallbackContext):
-    if 'id' in context.user_data:
+    user = update.message.from_user
+    chat = update.message.chat
+    player = get_player(user.id, chat.id)
+    if player:
+        print(player.username + " already exist in this chat")
         context.bot.send_message(chat_id=update.effective_chat.id,
-                                 text="I already know you, {}".format(context.user_data['first_name']))
+                                 text="I already know you, {}.\n"
+                                      "If you want to know your level, please type '/status'".format(player.username))
     else:
-        context.bot.send_message(chat_id=update.effective_chat.id, text="Now i know you!")
-        user = update.message.from_user
-        context.user_data['id'] = user.id
-        context.user_data['first_name'] = user.first_name
-        context.user_data['last_name'] = user.last_name
-        context.user_data['username'] = user.username
-        print("Registered user: {}, id: {}".format(context.user_data['username'], context.user_data['id']))
+        insert_player(user.id, user.username, chat.id)
+        context.bot.send_message(chat_id=update.effective_chat.id,
+                                 text="Now i know you! Welcome aboard, rookie\n"
+                                      + "In this group you are at level 1 with 0 experience")
+        print("Registered user: {}, id: {}, chat_id: {}".format(user.username, user.id, chat.id))
+
+
+def unregister(update: Update, context: CallbackContext):
+    user = update.message.from_user
+    chat = update.message.chat
+    player = get_player(user.id, chat.id)
+    if not player:
+        context.bot.send_message(chat_id=update.effective_chat.id,
+                                 text="I don't know who you are!\nPlease, type '/register' to start your journey")
+    else:
+        delete_player(user.id, chat.id)
+        print("Unregistered user: {}, id: {}, chat_id: {}".format(user.username, user.id, chat.id))
+        context.bot.send_message(chat_id=update.effective_chat.id, text="See you space cowboy...")
+
+
+def status(update: Update, context: CallbackContext):
+    user = update.message.from_user
+    chat = update.message.chat
+    player = get_player(user.id, chat.id)
+    if not player:
+        context.bot.send_message(chat_id=update.effective_chat.id,
+                                 text="I don't know who you are!\nPlease, type '/register' to start your journey")
+    else:
+        context.bot.send_message(chat_id=update.effective_chat.id,
+                                 text="Hi {}, your current level is {}.\n"
+                                      "You've earn {} experience in this group."
+                                 .format(player.username, player.level, player.experience))
+
+
+def echo(update: Update, context: CallbackContext):
+    user = update.message.from_user
+    chat = update.message.chat
+    player = get_player(user.id, chat.id)
+    gain_exp(user.id, chat.id)
+    level_up = check_player_level_up(user.id, chat.id)
+    if level_up:
+        context.bot.send_message(chat_id=update.effective_chat.id,
+                                 text="{} you have gained enough experience to level up!\n"
+                                      "Your current level is {}."
+                                 .format(player.username, player.level+1))
 
 
 """
-def echo(update: Update, context: CallbackContext):
-    context.bot.send_message(chat_id=update.effective_chat.id, text=update.message.text)
-    print(update.message.text)
-
-
 def caps(update: Update, context: CallbackContext):
     if context.args:
         text_caps = ' '.join(context.args).upper()
@@ -50,8 +91,10 @@ def main():
     dp = updater.dispatcher
 
     dp.add_handler(CommandHandler('start', start))
-    dp.add_handler(CommandHandler('registerMe', register))
-    # dp.add_handler(MessageHandler(Filters.text & (~Filters.command), echo))
+    dp.add_handler(CommandHandler('register', register))
+    dp.add_handler(CommandHandler('unregister', unregister))
+    dp.add_handler(CommandHandler('status', status))
+    dp.add_handler(MessageHandler(Filters.text & (~Filters.command), echo))
     dp.add_handler(MessageHandler(Filters.command, unknown))
 
     updater.start_polling()

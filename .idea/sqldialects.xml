@@ -5,4 +5,8 @@
     <file url="file://$PROJECT_DIR$/database/delete_tables.sql" dialect="PostgreSQL" />
     <file url="PROJECT" dialect="PostgreSQL" />
   </component>
+  <component name="SqlResolveMappings">
+    <file url="file://$PROJECT_DIR$/bot/main.py" scope="{&quot;node&quot;:{  &quot;@negative&quot;:&quot;1&quot;,  &quot;group&quot;:{   &quot;@kind&quot;:&quot;root&quot;,   &quot;node&quot;:{    &quot;@negative&quot;:&quot;1&quot;   }  } }}" />
+    <file url="PROJECT" scope="{&quot;node&quot;:{  &quot;@negative&quot;:&quot;1&quot;,  &quot;group&quot;:{   &quot;@kind&quot;:&quot;root&quot;,   &quot;node&quot;:{    &quot;name&quot;:{     &quot;@qname&quot;:&quot;a90aae70-85b4-4c66-882c-92c567a341cb&quot;    },    &quot;group&quot;:{     &quot;@kind&quot;:&quot;database&quot;,     &quot;node&quot;:{      &quot;name&quot;:{       &quot;@qname&quot;:&quot;expbot&quot;      }     }    }   }  } }}" />
+  </component>
 </project>
