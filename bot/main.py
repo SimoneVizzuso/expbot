@@ -35,15 +35,14 @@ def echo(update: Update, context: CallbackContext):
     chat = update.effective_message.chat
     player = get_player(user.id, chat.id)
     if player is not None:
-        if not antiflood(user.id, chat.id):
+        if antiflood(user.id, chat.id):
             gain_exp(user.id, chat.id)
             level_up = check_player_level_up(user.id, chat.id)
             name = user.username if user.username else user.first_name
             if level_up:
-                context.bot.send_message(chat_id=update.effective_chat.id,
-                                         text="{} you have gained enough experience to level up!\n"
-                                              "Your current level is {}."
-                                         .format(name, player.level + 1))
+                update.message.reply_text("{} you have gained enough experience to level up!\n"
+                                          "Your current level is {}."
+                                          .format(name, player.level + 1))
     else:
         insert_player(user.id, chat.id)
         gain_exp(user.id, chat.id)
@@ -58,23 +57,18 @@ def rank(update: Update, context: CallbackContext):
     else:
         response = "Ladies and Gentlemen, this is the current leaderboard\n"
         i = 1
+        name = None
         for player in leaderboard:
             if context.bot.getChatMember(chat.id, player.user_id).user.username:
                 name = str(context.bot.getChatMember(chat.id, player.user_id).user.username)
             elif context.bot.getChatMember(chat.id, player.user_id).user.first_name:
                 name = str(context.bot.getChatMember(chat.id, player.user_id).user.first_name)
-            else:
-                name = str(context.bot.getChatMember(chat.id, player.user_id).user.id)
 
             response = response + str(i) + "# place " + name + \
                        " al level " + str(player.level) + " (exp " + str(player.experience) + ")\n"
             i = i + 1
         context.bot.send_message(chat_id=update.effective_chat.id,
                                  text=response)
-
-
-def unknown(update: Update, context: CallbackContext):
-    context.bot.send_message(chat_id=update.effective_chat.id, text="I don't know how to execute that command, not yet")
 
 
 bursts = {}
@@ -87,7 +81,7 @@ def antiflood(user_id, chat_id):
     if (datetime.now() - burst["begin"]).total_seconds() < 3:
         burst["count"] += 1
         bursts[key] = burst
-        return burst["count"] > 4
+        return burst["count"] < 5
     else:
         bursts[key] = {"begin": datetime.now(), "count": 1}
         return True
@@ -101,11 +95,10 @@ def main():
     dp.add_handler(CommandHandler('start', start))
     dp.add_handler(CommandHandler('status', status))
     dp.add_handler(CommandHandler('leaderboard', rank))
-    dp.add_handler(MessageHandler(Filters.text & (~Filters.command), echo))
+    dp.add_handler(MessageHandler((~Filters.command) & (~Filters.update.edited_message), echo))
 
     updater.start_polling()
     updater.idle()
-    updater.stop()
 
 
 if __name__ == '__main__':
