@@ -149,7 +149,6 @@ def get_top_ten(chat_id=0):
         if row is not None:
             while row is not None:
                 leaderboard.append(Player(row[0], row[1], row[2], row[3], row[4]))
-                print(row)
                 row = cur.fetchone()
         else:
             return None
