@@ -1,9 +1,10 @@
 import logging
 from datetime import datetime
+
 from telegram import Update
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
 
-from connection import insert_player, get_player, delete_player, gain_exp, check_player_level_up, get_top_ten
+from connection import insert_player, get_player, gain_exp, check_player_level_up, get_top_ten
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
@@ -17,35 +18,9 @@ def start(update: Update, context: CallbackContext):
                                   "Chack your stats with /status and the chat ranks with /leaderboard")
 
 
-def register(update: Update, context: CallbackContext):
-    user = update.message.from_user
-    chat = update.message.chat
-    player = get_player(user.id, chat.id)
-    if player:
-        update.message.reply_text("I already know you, {}.\n"
-                                      "If you want to know your level, please type /status".format(user.username))
-    else:
-        insert_player(user.id, chat.id)
-        update.message.reply_text("Now i know you! Welcome aboard, rookie\n"
-                                      + "In this group you are at level 1 with 0 experience")
-        print("Registered, id: {}, chat_id: {}".format(user.id, chat.id))
-
-
-def unregister(update: Update, context: CallbackContext):
-    user = update.message.from_user
-    chat = update.message.chat
-    player = get_player(user.id, chat.id)
-    if not player:
-        update.message.reply_text("I don't know who you are!\nPlease, type /register to start your journey")
-    else:
-        delete_player(user.id, chat.id)
-        print("Unregistered id: {}, chat_id: {}".format(user.id, chat.id))
-        update.message.reply_text("See you space cowboy...")
-
-
-def status(update: Update, context: CallbackContext):
-    user = update.message.from_user
-    chat = update.message.chat
+def status(update: Update):
+    user = update.effective_message.from_user
+    chat = update.effective_message.chat
     player = get_player(user.id, chat.id)
     if not player:
         update.message.reply_text("I don't know who you are!\nPlease, type /register to start your journey")
@@ -56,8 +31,8 @@ def status(update: Update, context: CallbackContext):
 
 
 def echo(update: Update, context: CallbackContext):
-    user = update.message.from_user
-    chat = update.message.chat
+    user = update.effective_message.from_user
+    chat = update.effective_message.chat
     player = get_player(user.id, chat.id)
     if player is not None:
         if not antiflood(user.id, chat.id):
@@ -75,7 +50,7 @@ def echo(update: Update, context: CallbackContext):
 
 
 def rank(update: Update, context: CallbackContext):
-    chat = update.message.chat
+    chat = update.effective_message.chat
     leaderboard = get_top_ten(chat.id)
     if not leaderboard:
         context.bot.send_message(chat_id=update.effective_chat.id,
@@ -90,9 +65,9 @@ def rank(update: Update, context: CallbackContext):
                 name = str(context.bot.getChatMember(chat.id, player.user_id).user.first_name)
             else:
                 name = str(context.bot.getChatMember(chat.id, player.user_id).user.id)
-            response = response + str(i) + "# place " \
-                       + name \
-                       + " al level " + str(player.level) + " (exp " + str(player.experience) + ")\n"
+
+            response = response + str(i) + "# place " + name + \
+                       " al level " + str(player.level) + " (exp " + str(player.experience) + ")\n"
             i = i + 1
         context.bot.send_message(chat_id=update.effective_chat.id,
                                  text=response)
@@ -109,33 +84,27 @@ def antiflood(user_id, chat_id):
     key = f"{user_id}@{chat_id}"
     burst = bursts.get(key, {"begin": datetime.now(), "count": 0})
 
-    if (datetime.now() - burst["begin"]).total_seconds() < 4:
+    if (datetime.now() - burst["begin"]).total_seconds() < 3:
         burst["count"] += 1
         bursts[key] = burst
-        return burst["count"] > 5
+        return burst["count"] > 4
     else:
         bursts[key] = {"begin": datetime.now(), "count": 1}
         return True
 
 
-updater = Updater(token='', use_context=True)
+updater = Updater(token='1369584364:AAHR0BfkhMetufx6slqD53kL5wCaqsvcncE', use_context=True)
 
 
 def main():
     dp = updater.dispatcher
-
     dp.add_handler(CommandHandler('start', start))
-    #dp.add_handler(CommandHandler('register', register))
-    #dp.add_handler(CommandHandler('unregister', unregister))
     dp.add_handler(CommandHandler('status', status))
     dp.add_handler(CommandHandler('leaderboard', rank))
     dp.add_handler(MessageHandler(Filters.text & (~Filters.command), echo))
-    # dp.add_handler(MessageHandler(Filters.command, unknown))
 
     updater.start_polling()
-
     updater.idle()
-
     updater.stop()
 
 
