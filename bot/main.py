@@ -1,5 +1,4 @@
 import logging
-
 from telegram import Update
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
 
@@ -19,16 +18,16 @@ def register(update: Update, context: CallbackContext):
     chat = update.message.chat
     player = get_player(user.id, chat.id)
     if player:
-        print(player.username + " already exist in this chat")
+        print(user.username + " already exist in this chat")
         context.bot.send_message(chat_id=update.effective_chat.id,
                                  text="I already know you, {}.\n"
-                                      "If you want to know your level, please type '/status'".format(player.username))
+                                      "If you want to know your level, please type '/status'".format(user.username))
     else:
-        insert_player(user.id, user.username, chat.id)
+        insert_player(user.id, chat.id)
         context.bot.send_message(chat_id=update.effective_chat.id,
                                  text="Now i know you! Welcome aboard, rookie\n"
                                       + "In this group you are at level 1 with 0 experience")
-        print("Registered user: {}, id: {}, chat_id: {}".format(user.username, user.id, chat.id))
+        print("Registered, id: {}, chat_id: {}".format(user.id, chat.id))
 
 
 def unregister(update: Update, context: CallbackContext):
@@ -40,7 +39,7 @@ def unregister(update: Update, context: CallbackContext):
                                  text="I don't know who you are!\nPlease, type '/register' to start your journey")
     else:
         delete_player(user.id, chat.id)
-        print("Unregistered user: {}, id: {}, chat_id: {}".format(user.username, user.id, chat.id))
+        print("Unregistered id: {}, chat_id: {}".format(user.id, chat.id))
         context.bot.send_message(chat_id=update.effective_chat.id, text="See you space cowboy...")
 
 
@@ -55,7 +54,7 @@ def status(update: Update, context: CallbackContext):
         context.bot.send_message(chat_id=update.effective_chat.id,
                                  text="Hi {}, your current level is {}.\n"
                                       "You've earn {} experience in this group."
-                                 .format(player.username, player.level, player.experience))
+                                 .format(user.username, player.level, player.experience))
 
 
 def echo(update: Update, context: CallbackContext):
@@ -68,7 +67,7 @@ def echo(update: Update, context: CallbackContext):
         context.bot.send_message(chat_id=update.effective_chat.id,
                                  text="{} you have gained enough experience to level up!\n"
                                       "Your current level is {}."
-                                 .format(player.username, player.level+1))
+                                 .format(user.username, player.level + 1))
 
 
 """
@@ -86,8 +85,10 @@ def unknown(update: Update, context: CallbackContext):
     context.bot.send_message(chat_id=update.effective_chat.id, text="I don't know how to execute that command, not yet")
 
 
+updater = Updater(token='1331836039:AAFxt9VD2nm-fqXQHolYIgn7CRQG3Kxy1mo', use_context=True)
+
+
 def main():
-    updater = Updater(token='1331836039:AAFxt9VD2nm-fqXQHolYIgn7CRQG3Kxy1mo', use_context=True)
     dp = updater.dispatcher
 
     dp.add_handler(CommandHandler('start', start))

@@ -21,7 +21,7 @@ from player import Player
 """
 
 
-def insert_player(user_id, user_username="", chat_id=0):
+def insert_player(user_id, chat_id=0):
     conn = None
     try:
         # params = config()
@@ -30,9 +30,9 @@ def insert_player(user_id, user_username="", chat_id=0):
         cur = conn.cursor()
 
         if user_id is not None:
-            cur.execute("""insert into player (user_id, username, chat_id, level, experience, experience_next_level)
-                           VALUES (%s, %s, %s, 1, 0, (select experience_next_level from rank where level = 1))""",
-                        (user_id, user_username, chat_id))
+            cur.execute("""insert into player (user_id, chat_id, level, experience, experience_next_level)
+                           VALUES (%s, %s, 1, 0, (select experience_next_level from rank where level = 1))""",
+                        (user_id, chat_id))
 
         conn.commit()
 

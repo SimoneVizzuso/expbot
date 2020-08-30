@@ -19,7 +19,6 @@ insert into rank(level, starting_experience, experience_next_level, icon) VALUES
 
 create table player(
     user_id int,
-    username varchar(255),
     chat_id int,
     level int,
     experience int,
