@@ -161,6 +161,29 @@ def get_top_ten(chat_id=0):
             conn.close()
 
 
+def get_king(chat_id=0):
+    conn = None
+    try:
+        # params = config()
+        # conn = psycopg2.connect(**params)
+        conn = psycopg2.connect(host="localhost", dbname="expbot", user="postgres", password="HoZGnEAPL3xP6H")
+        cur = conn.cursor()
+        cur.execute("select * from player where chat_id = " + str(chat_id) + " order by experience desc limit 1")
+        row = cur.fetchone()
+        king = None
+        if row is not None:
+            king = Player(row[0], row[1], row[2], row[3], row[4])
+        else:
+            return None
+        cur.close()
+        return king
+    except (Exception, psycopg2.DatabaseError) as error:
+        print(error)
+    finally:
+        if conn is not None:
+            conn.close()
+
+
 def silence_chat(chat_id=0):
     conn = None
     try:

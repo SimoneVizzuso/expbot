@@ -1,11 +1,12 @@
 import logging
-from datetime import datetime
+from datetime import datetime, time
 
 from telegram import Update
-from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
+from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext, JobQueue
+from telegram.ext.jobqueue import Days
 
 from connection import insert_player, get_player, gain_exp, check_player_level_up, get_top_ten, silence_chat, \
-    check_silence
+    check_silence, get_king
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
@@ -101,6 +102,34 @@ def silence(update: Update, context: CallbackContext):
                                                                         "/silence to shout me up")
 
 
+def notify_king(update: Update, context: CallbackContext):
+    context.bot.send_message(chat_id=update.effective_chat.id, text="King mode is enabled")
+    t = time(hour=10-2, minute=0, second=0, microsecond=0)
+    print(t)
+    print(datetime.utcnow())
+    job = context.job_queue.run_daily(job_king, t, days=Days.EVERY_DAY, context=update.effective_chat.id, name="king")
+    context.chat_data['job'] = job
+
+
+def job_king(context: CallbackContext):
+    job = context.job
+    king = get_king(job.context)
+    if not king:
+        context.bot.send_message(chat_id=job.context,
+                                 text='"And any man who must say "I am king" is no ' \
+                                      'true king at all." - George R.R. Martin')
+    elif not check_silence(job.context):
+        name = None
+        if context.bot.getChatMember(job.context, king.user_id).user.username:
+            name = str(context.bot.getChatMember(job.context, king.user_id).user.username)
+        elif context.bot.getChatMember(job.context, king.user_id).user.first_name:
+            name = str(context.bot.getChatMember(job.context, king.user_id).user.first_name)
+        context.bot.send_message(chat_id=job.context,
+                                 text="Today's king is " + name + " at level " +
+                                      str(king.level) + " (exp " + str(king.experience) +
+                                      ")\nAll of you, kneel before him and commit yourselves to be crowned tomorrow")
+
+
 updater = Updater(token='', use_context=True)
 
 
@@ -110,6 +139,9 @@ def main():
     dp.add_handler(CommandHandler('status', status))
     dp.add_handler(CommandHandler('leaderboard', rank))
     dp.add_handler(CommandHandler('silence', silence))
+    dp.add_handler(CommandHandler('notify_king', notify_king,
+                                  pass_args=True, pass_job_queue=True, pass_chat_data=True))
+    #dp.add_handler(CommandHandler('king', king))
     dp.add_handler(MessageHandler((~Filters.command) & (~Filters.update.edited_message), echo))
 
     updater.start_polling()
