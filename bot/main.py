@@ -4,7 +4,8 @@ from datetime import datetime
 from telegram import Update
 from telegram.ext import Updater, CommandHandler, MessageHandler, Filters, CallbackContext
 
-from connection import insert_player, get_player, gain_exp, check_player_level_up, get_top_ten
+from connection import insert_player, get_player, gain_exp, check_player_level_up, get_top_ten, silence_chat, \
+    check_silence
 
 logging.basicConfig(format='%(asctime)s - %(name)s - %(levelname)s - %(message)s',
                     level=logging.INFO)
@@ -23,7 +24,8 @@ def status(update: Update, context: CallbackContext):
     chat = update.effective_message.chat
     player = get_player(user.id, chat.id)
     if not player:
-        update.message.reply_text("I don't know who you are!\nPlease, type /register to start your journey")
+        update.message.reply_text("I don't know who you are!\n"
+                                  "With the first non-command message you send I will register you!")
     else:
         update.message.reply_text("Hi {}, your current level is {}.\n"
                                   "You've earn {} experience in this group."
@@ -39,17 +41,18 @@ def echo(update: Update, context: CallbackContext):
             gain_exp(user.id, chat.id)
             level_up = check_player_level_up(user.id, chat.id)
             name = user.username if user.username else user.first_name
-            if level_up:
-                update.message.reply_text("{} you have gained enough experience to level up!\n"
-                                          "Your current level is {}."
-                                          .format(name, player.level + 1))
+            if level_up and not check_silence(chat.id):
+                context.bot.send_message(chat_id=update.effective_chat.id,
+                                         text="{} you have gained enough experience to level up!\n"
+                                              "Your current level is {}."
+                                         .format(name, player.level + 1))
     else:
         insert_player(user.id, chat.id)
         gain_exp(user.id, chat.id)
 
 
 def rank(update: Update, context: CallbackContext):
-    chat = update.effective_message.chat
+    chat = update.message.chat
     leaderboard = get_top_ten(chat.id)
     if not leaderboard:
         context.bot.send_message(chat_id=update.effective_chat.id,
@@ -87,6 +90,17 @@ def antiflood(user_id, chat_id):
         return True
 
 
+def silence(update: Update, context: CallbackContext):
+    chat = update.message.chat
+    check = silence_chat(chat.id)
+    if check:
+        context.bot.send_message(chat_id=update.effective_chat.id, text="I'm now in silence mode, please type "
+                                                                        "/silence again to return in reply mode")
+    else:
+        context.bot.send_message(chat_id=update.effective_chat.id, text="I'm now in reply mode, please type "
+                                                                        "/silence to shout me up")
+
+
 updater = Updater(token='', use_context=True)
 
 
@@ -95,6 +109,7 @@ def main():
     dp.add_handler(CommandHandler('start', start))
     dp.add_handler(CommandHandler('status', status))
     dp.add_handler(CommandHandler('leaderboard', rank))
+    dp.add_handler(CommandHandler('silence', silence))
     dp.add_handler(MessageHandler((~Filters.command) & (~Filters.update.edited_message), echo))
 
     updater.start_polling()

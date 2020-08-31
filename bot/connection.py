@@ -143,17 +143,67 @@ def get_top_ten(chat_id=0):
         # conn = psycopg2.connect(**params)
         conn = psycopg2.connect(host="localhost", dbname="expbot", user="postgres", password="HoZGnEAPL3xP6H")
         cur = conn.cursor()
-        cur.execute("""select * from player where chat_id = %s order by experience desc limit 10""", (chat_id))
+        cur.execute("select * from player where chat_id = " + str(chat_id) + " order by experience desc limit 10")
         row = cur.fetchone()
         leaderboard = []
+        print(row)
         if row is not None:
             while row is not None:
-                leaderboard.append(Player(row[0], row[1], row[2], row[3], row[4]))
+                print(row)
+                leaderboard.append(Player(row[0], row[1], row[2], row[3], row[4], row[5]))
+                print(leaderboard)
                 row = cur.fetchone()
         else:
             return None
         cur.close()
         return leaderboard
+    except (Exception, psycopg2.DatabaseError) as error:
+        print(error)
+    finally:
+        if conn is not None:
+            conn.close()
+
+
+def silence_chat(chat_id=0):
+    conn = None
+    try:
+        # params = config()
+        # conn = psycopg2.connect(**params)
+        conn = psycopg2.connect(host="localhost", dbname="expbot", user="postgres", password="HoZGnEAPL3xP6H")
+        cur = conn.cursor()
+
+        if chat_id is not None:
+            cur.execute("select silence from chat where chat_id = " + str(chat_id))
+            check = cur.fetchone()
+            conn.commit()
+            cur.execute("update chat set silence = not " + str(check[0]) + " where chat_id = " + str(chat_id))
+            conn.commit()
+            cur.close()
+            return not check[0]
+
+        cur.close()
+    except (Exception, psycopg2.DatabaseError) as error:
+        print(error)
+    finally:
+        if conn is not None:
+            conn.close()
+
+
+def check_silence(chat_id=0):
+    conn = None
+    try:
+        # params = config()
+        # conn = psycopg2.connect(**params)
+        conn = psycopg2.connect(host="localhost", dbname="expbot", user="postgres", password="HoZGnEAPL3xP6H")
+        cur = conn.cursor()
+
+        if chat_id is not None:
+            cur.execute("select silence from chat where chat_id = " + str(chat_id))
+            check = cur.fetchone()
+            cur.close()
+            return check[0]
+
+        cur.close()
     except (Exception, psycopg2.DatabaseError) as error:
         print(error)
     finally:

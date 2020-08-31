@@ -35,5 +35,12 @@ create table player(
     experience_next_level int,
     PRIMARY KEY (user_id, chat_id),
     FOREIGN KEY (level) REFERENCES rank(level),
-    FOREIGN KEY (experience_next_level) REFERENCES rank(experience_next_level)
+    FOREIGN KEY (experience_next_level) REFERENCES rank(experience_next_level),
+    FOREIGN KEY (chat_id) REFERENCES chat(chat_id)
+);
+
+create table chat(
+    chat_id bigint,
+    silence boolean,
+    PRIMARY KEY (chat_id)
 );
