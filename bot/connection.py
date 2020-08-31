@@ -146,12 +146,9 @@ def get_top_ten(chat_id=0):
         cur.execute("select * from player where chat_id = " + str(chat_id) + " order by experience desc limit 10")
         row = cur.fetchone()
         leaderboard = []
-        print(row)
         if row is not None:
             while row is not None:
-                print(row)
-                leaderboard.append(Player(row[0], row[1], row[2], row[3], row[4], row[5]))
-                print(leaderboard)
+                leaderboard.append(Player(row[0], row[1], row[2], row[3], row[4]))
                 row = cur.fetchone()
         else:
             return None
